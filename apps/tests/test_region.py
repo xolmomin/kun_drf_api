@@ -25,21 +25,18 @@ class TestRegionView:
         assert response.data['name'] == data['name']
         assert len(response.data['id']) == 36
 
-    @pytest.fixture()
-    def regions(self):
+    def test_region_list_api(self, client):
         Region.objects.create(name='Toshkent')
         Region.objects.create(name='Navoi')
-
-    def test_region_list_api(self, client, regions):
         url = reverse_lazy('region-list')
         # url = '/api/v1/region/'
         response = client.get(url)
         assert response.status_code == 200
         assert len(response.data) == 2
 
-    def test_region_update_api(self, client, regions):
-        region = Region.objects.first()
-        '/api/v1/region/e09c9c1e-c071-4e4e-bc6f-76fc2b67d5f5/'
+    def test_region_update_api(self, client):
+        region = Region.objects.create(name='Toshkent')
+        Region.objects.create(name='Navoi')
         url = reverse_lazy('region-detail', args=(region.pk,))
         data = {
             'name': 'Fargona'
@@ -49,9 +46,10 @@ class TestRegionView:
         assert response.data['name'] == data['name']
         assert response.data['id'] == str(region.pk)
 
-    def test_region_filter_api(self, client, regions):
-        region = Region.objects.first()
-        '/api/v1/region?name=Fargona'
+    @pytest.mark.django_db
+    def test_region_filter_api(self, client):
+        region = Region.objects.create(name='Toshkent')
+        Region.objects.create(name='Navoi')
         url = reverse_lazy('region-list')
         data = {
             'name': 'Toshkent'
@@ -59,12 +57,12 @@ class TestRegionView:
         response = client.get(url, data, content_type='application/json')
         assert response.status_code == 200
         assert response.data[0]['name'] == data['name']
-        assert response.data[0]['id'] == str(region.pk)
+        assert response.data[0]['id'] == f'{region.pk}'
         assert len(response.data) == 1
 
-    def test_region_wrong_filter_api(self, client, regions):
-        region = Region.objects.first()
-        '/api/v1/region?name=Samarqand'
+    def test_region_wrong_filter_api(self, client):
+        Region.objects.create(name='Toshkent')
+        Region.objects.create(name='Navoi')
         url = reverse_lazy('region-list')
         data = {
             'name': 'Samarqand'
@@ -72,3 +70,7 @@ class TestRegionView:
         response = client.get(url, data, content_type='application/json')
         assert response.status_code == 200
         assert len(response.data) == 0
+
+
+# test, filter, factory-boy
+
